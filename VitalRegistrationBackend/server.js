@@ -1,3 +1,4 @@
+// server.js
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
@@ -28,7 +29,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Logger
-app.use(morgan('combined', { stream: logger.stream }));
+app.use(morgan('combined', {
+  stream: {
+    write: (message) => logger.info(message.trim()),
+  },
+}));
 
 // Routes
 app.use('/api/v1/auth', authRoutes);
