@@ -69,7 +69,7 @@ This project aspires to **make civic technology in Ethiopia and beyond one step 
 - Docker (optional)  
 
 ### 🚀 Installation
-```bash
+
 # Clone the repository
 git clone https://github.com/your-username/vital-registration-app.git
 cd vital-registration-app
