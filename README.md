@@ -71,7 +71,7 @@ This project aspires to **make civic technology in Ethiopia and beyond one step 
 ### 🚀 Installation
 
 # Clone the repository
-git clone https://github.com/your-username/vital-registration-app.git
+git clone https://github.com/Bedru-Mekiyu/vital-registration-app.git
 cd vital-registration-app
 
 # Install dependencies
