@@ -1,0 +1,189 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  password      String
+  firstName     String
+  lastName      String
+  phone         String?
+  role          UserRole       @default(CITIZEN)
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  auditLogs     AuditLog[]
+  certificates  Certificate[]
+  approvedBy    Certificate[]  @relation("ApprovedBy")
+  verifiedBy    Certificate[]  @relation("VerifiedBy")
+  familyMembers FamilyMember[]
+  notifications Notification[]
+  badges        UserBadge[]
+
+  @@map("users")
+}
+
+model Certificate {
+  id                String            @id @default(cuid())
+  certificateNumber String            @unique
+  type              CertificateType
+  status            CertificateStatus @default(PENDING)
+  applicantId       String
+  fullName          String
+  dateOfBirth       DateTime?
+  placeOfBirth      String?
+  gender            Gender?
+  nationality       String?
+  fatherName        String?
+  motherName        String?
+  spouseName        String?
+  dateOfEvent       DateTime?
+  placeOfEvent      String?
+  registrationDate  DateTime          @default(now())
+  verifierId        String?
+  verifiedAt        DateTime?
+  approverId        String?
+  approvedAt        DateTime?
+  qrCode            String?
+  blockchainHash    String?
+  documentUrl       String?
+  issuedAt          DateTime?
+  expiresAt         DateTime?
+  notes             String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  auditLogs         AuditLog[]
+  applicant         User              @relation(fields: [applicantId], references: [id])
+  approver          User?             @relation("ApprovedBy", fields: [approverId], references: [id])
+  verifier          User?             @relation("VerifiedBy", fields: [verifierId], references: [id])
+  familyRelations   FamilyMember[]
+  notifications     Notification[]
+
+  @@map("certificates")
+}
+
+model FamilyMember {
+  id                String       @id @default(cuid())
+  userId            String
+  certificateId     String
+  relationship      Relationship
+  relatedPersonName String
+  createdAt         DateTime     @default(now())
+  certificate       Certificate  @relation(fields: [certificateId], references: [id])
+  user              User         @relation(fields: [userId], references: [id])
+
+  @@map("family_members")
+}
+
+model AuditLog {
+  id            String       @id @default(cuid())
+  userId        String?
+  certificateId String?
+  action        String
+  details       Json?
+  ipAddress     String?
+  userAgent     String?
+  timestamp     DateTime     @default(now())
+  certificate   Certificate? @relation(fields: [certificateId], references: [id])
+  user          User?        @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}
+
+model Notification {
+  id            String           @id @default(cuid())
+  userId        String
+  certificateId String?
+  type          NotificationType
+  title         String
+  message       String
+  isRead        Boolean          @default(false)
+  createdAt     DateTime         @default(now())
+  certificate   Certificate?     @relation(fields: [certificateId], references: [id])
+  user          User             @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+model Badge {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  description String
+  icon        String
+  color       String
+  criteria    Json
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  userBadges  UserBadge[]
+
+  @@map("badges")
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  badgeId   String
+  earnedAt  DateTime @default(now())
+  isVisible Boolean  @default(true)
+  badge     Badge    @relation(fields: [badgeId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, badgeId])
+  @@map("user_badges")
+}
+
+enum UserRole {
+  CITIZEN
+  CLERK
+  VERIFIER
+  APPROVER
+  ADMIN
+  COURT_OFFICIAL
+}
+
+enum CertificateType {
+  BIRTH
+  DEATH
+  MARRIAGE
+  DIVORCE
+  ADOPTION
+}
+
+enum CertificateStatus {
+  PENDING
+  UNDER_REVIEW
+  VERIFIED
+  APPROVED
+  ISSUED
+  REJECTED
+  EXPIRED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum Relationship {
+  FATHER
+  MOTHER
+  SPOUSE
+  CHILD
+  SIBLING
+  GUARDIAN
+}
+
+enum NotificationType {
+  STATUS_UPDATE
+  APPROVAL_REQUEST
+  DOCUMENT_READY
+  VERIFICATION_REQUIRED
+  SYSTEM_ALERT
+}
