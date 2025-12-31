@@ -1,13 +1,13 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate, Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  User, 
-  FileText, 
-  Shield, 
-  Settings, 
-  Bell, 
+import {
+  User,
+  FileText,
+  Shield,
+  Settings,
+  Bell,
   Plus,
   Download,
   Eye,
@@ -15,35 +15,40 @@ import {
   Award,
   Users,
   FileImage,
-  CalendarDays
+  CalendarDays,
 } from "lucide-react";
-import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+
+// extra pages used in nested routes
+import EventApplication from "./EventApplication"; // uses ?type=... [file:59]
+import FamilyTree from "./FamilyTree";
 
 const DashboardOverview = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  
-  const userName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'User';
-  
+
+  const userName =
+    user?.user_metadata?.first_name ||
+    user?.email?.split("@")[0] ||
+    "User";
+
   const handleViewCertificate = (certId: string, certType: string) => {
     toast({
       title: "Opening Certificate",
       description: `Viewing ${certType} details...`,
     });
-    // Navigate to certificate detail view
-    console.log('View certificate:', certId);
+    console.log("View certificate:", certId);
   };
-  
+
   const handleDownloadCertificate = (certId: string, certType: string) => {
     toast({
       title: "Download Started",
       description: `Downloading ${certType}...`,
     });
-    // Simulate download
-    console.log('Download certificate:', certId);
+    console.log("Download certificate:", certId);
   };
+
   const recentCertificates = [
     { id: "1", type: "Birth Certificate", name: "John Doe Jr.", date: "2024-01-15", status: "Verified" },
     { id: "2", type: "Marriage Certificate", name: "John & Jane Doe", date: "2024-01-10", status: "Processing" },
@@ -85,7 +90,7 @@ const DashboardOverview = () => {
             </p>
           </CardContent>
         </Card>
-        
+
         <Card className="animate-scale-in" style={{ animationDelay: "0.1s" }}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Verified Events</CardTitle>
@@ -137,10 +142,10 @@ const DashboardOverview = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {quickActions.map((action, index) => (
+              {quickActions.map((action) => (
                 <Link key={action.label} to={action.href} className="block">
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     className="w-full justify-start h-auto py-4 hover:bg-accent/50"
                   >
                     <action.icon className={`h-5 w-5 mr-3 ${action.color}`} />
@@ -163,9 +168,9 @@ const DashboardOverview = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {recentCertificates.map((cert, index) => (
-                  <div 
-                    key={cert.id} 
+                {recentCertificates.map((cert) => (
+                  <div
+                    key={cert.id}
                     className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/30 transition-colors"
                   >
                     <div className="flex items-center space-x-4">
@@ -186,17 +191,17 @@ const DashboardOverview = () => {
                         {cert.status}
                       </Badge>
                       <div className="flex space-x-1">
-                        <Button 
-                          size="icon" 
-                          variant="ghost" 
+                        <Button
+                          size="icon"
+                          variant="ghost"
                           className="h-8 w-8"
                           onClick={() => handleViewCertificate(cert.id, cert.type)}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          size="icon" 
-                          variant="ghost" 
+                        <Button
+                          size="icon"
+                          variant="ghost"
                           className="h-8 w-8"
                           onClick={() => handleDownloadCertificate(cert.id, cert.type)}
                         >
@@ -207,7 +212,7 @@ const DashboardOverview = () => {
                   </div>
                 ))}
               </div>
-              
+
               <div className="mt-6 pt-4 border-t">
                 <Link to="/dashboard/certificates">
                   <Button variant="outline" className="w-full">
@@ -223,12 +228,45 @@ const DashboardOverview = () => {
   );
 };
 
+// Wrapper to ensure EventApplication always gets ?type=<eventType>
+const EventApplicationWrapper = ({ type }: { type: string }) => {
+  const location = useLocation();
+  const search = new URLSearchParams(location.search);
+  const currentType = search.get("type");
+
+  if (currentType === type) {
+    return <EventApplication />;
+  }
+
+  search.set("type", type);
+  return (
+    <Navigate to={`${location.pathname}?${search.toString()}`} replace />
+  );
+};
+
 const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-accent/10 to-muted/30">
       <Routes>
+        {/* /dashboard */}
         <Route path="/" element={<DashboardOverview />} />
-        {/* Add more dashboard routes here as needed */}
+
+        {/* /dashboard/register/birth|marriage|death -> EventApplication with type */}
+        <Route
+          path="register/birth"
+          element={<EventApplicationWrapper type="birth" />}
+        />
+        <Route
+          path="register/marriage"
+          element={<EventApplicationWrapper type="marriage" />}
+        />
+        <Route
+          path="register/death"
+          element={<EventApplicationWrapper type="death" />}
+        />
+
+        {/* /dashboard/family */}
+        <Route path="family" element={<FamilyTree />} />
       </Routes>
     </div>
   );

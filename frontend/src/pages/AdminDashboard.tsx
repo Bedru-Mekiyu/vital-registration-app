@@ -1,23 +1,24 @@
-import { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
-import { 
-  Users, 
-  FileText, 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
+// AdminDashboard.tsx
+
+import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Users,
+  FileText,
+  CheckCircle,
+  XCircle,
+  Clock,
   TrendingUp,
   Shield,
   Building,
-  Eye
-} from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+  Eye,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface PendingEvent {
   id: string;
@@ -33,13 +34,13 @@ const AdminDashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState<string>('');
+  const [userRole, setUserRole] = useState<string>("");
   const [pendingEvents, setPendingEvents] = useState<PendingEvent[]>([]);
   const [stats, setStats] = useState({
     totalApplications: 0,
     pendingReview: 0,
     approved: 0,
-    rejected: 0
+    rejected: 0,
   });
 
   useEffect(() => {
@@ -51,51 +52,63 @@ const AdminDashboard = () => {
 
     try {
       // Get user role
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('user_id', user.id)
-        .single();
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("user_id", user.id)
+        .maybeSingle(); // safer than single()
 
-      if (!profile || !['national_admin', 'regional_admin', 'clerk', 'auditor'].includes(profile.role)) {
+      if (profileError) {
+        throw profileError;
+      }
+
+      if (
+        !profile ||
+        !["national_admin", "regional_admin", "clerk", "auditor"].includes(
+          profile.role
+        )
+      ) {
         toast({
           title: "Access Denied",
           description: "You don't have admin privileges",
-          variant: "destructive"
+          variant: "destructive",
         });
-        navigate('/dashboard');
+        navigate("/dashboard");
         return;
       }
 
       setUserRole(profile.role);
 
       // Get pending events
-      const { data: events } = await supabase
-        .from('events')
-        .select('*')
-        .eq('status', 'pending')
-        .order('created_at', { ascending: false });
+      const { data: events, error: eventsError } = await supabase
+        .from("events")
+        .select("*")
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
 
+      if (eventsError) throw eventsError;
       setPendingEvents(events || []);
 
       // Get statistics
-      const { data: allEvents } = await supabase
-        .from('events')
-        .select('status');
+      const { data: allEvents, error: allEventsError } = await supabase
+        .from("events")
+        .select("status");
+
+      if (allEventsError) throw allEventsError;
 
       if (allEvents) {
         setStats({
           totalApplications: allEvents.length,
-          pendingReview: allEvents.filter(e => e.status === 'pending').length,
-          approved: allEvents.filter(e => e.status === 'approved').length,
-          rejected: allEvents.filter(e => e.status === 'rejected').length
+          pendingReview: allEvents.filter((e) => e.status === "pending").length,
+          approved: allEvents.filter((e) => e.status === "approved").length,
+          rejected: allEvents.filter((e) => e.status === "rejected").length,
         });
       }
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -105,19 +118,21 @@ const AdminDashboard = () => {
   const handleApproval = async (eventId: string, approve: boolean) => {
     try {
       const { error } = await supabase
-        .from('events')
+        .from("events")
         .update({
-          status: approve ? 'approved' : 'rejected',
+          status: approve ? "approved" : "rejected",
           approved_by: user?.id,
-          approved_at: new Date().toISOString()
+          approved_at: new Date().toISOString(),
         })
-        .eq('id', eventId);
+        .eq("id", eventId);
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: `Application ${approve ? 'approved' : 'rejected'} successfully`,
+        description: `Application ${
+          approve ? "approved" : "rejected"
+        } successfully`,
       });
 
       loadAdminData();
@@ -125,7 +140,7 @@ const AdminDashboard = () => {
       toast({
         title: "Error",
         description: error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -133,7 +148,7 @@ const AdminDashboard = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
       </div>
     );
   }
@@ -149,7 +164,10 @@ const AdminDashboard = () => {
             </h1>
           </div>
           <p className="text-muted-foreground">
-            Role: <Badge variant="secondary">{userRole.replace('_', ' ').toUpperCase()}</Badge>
+            Role:{" "}
+            <Badge variant="secondary">
+              {userRole ? userRole.replace("_", " ").toUpperCase() : "UNKNOWN"}
+            </Badge>
           </p>
         </div>
 
@@ -157,17 +175,23 @@ const AdminDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Applications</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Total Applications
+              </CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalApplications}</div>
+              <div className="text-2xl font-bold">
+                {stats.totalApplications}
+              </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Pending Review
+              </CardTitle>
               <Clock className="h-4 w-4 text-yellow-600" />
             </CardHeader>
             <CardContent>
@@ -223,17 +247,19 @@ const AdminDashboard = () => {
                         </span>
                       </div>
                       <p className="font-medium">
-                        {event.event_data.full_name || 'N/A'}
+                        {event.event_data?.full_name || "N/A"}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {event.event_data.place_of_event || 'N/A'}
+                        {event.event_data?.place_of_event || "N/A"}
                       </p>
                     </div>
                     <div className="flex gap-2">
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => {/* View details */}}
+                        onClick={() => {
+                          // TODO: view details
+                        }}
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
