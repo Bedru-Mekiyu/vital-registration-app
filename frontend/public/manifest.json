@@ -1,0 +1,46 @@
+{
+  "name": "VitaLink Ethiopia",
+  "short_name": "VitaLink",
+  "description": "Digital civic platform for vital records and government services in Ethiopia",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "categories": ["government", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/favicon.webp",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/placeholder.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/placeholder.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Access your dashboard",
+      "url": "/dashboard",
+      "icons": [{"src": "/placeholder.svg", "sizes": "96x96"}]
+    },
+    {
+      "name": "Register Birth",
+      "short_name": "Birth Cert",
+      "description": "Register birth certificate",
+      "url": "/dashboard/register/birth",
+      "icons": [{"src": "/placeholder.svg", "sizes": "96x96"}]
+    }
+  ]
+}

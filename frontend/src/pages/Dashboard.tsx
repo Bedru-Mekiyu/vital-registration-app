@@ -1,318 +1,235 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Routes, Route } from "react-router-dom";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { 
+  User, 
   FileText, 
-  Clock, 
-  CheckCircle, 
-  Activity, 
-  Award,
-  TrendingUp,
-  Users,
+  Shield, 
+  Settings, 
+  Bell, 
+  Plus,
+  Download,
+  Eye,
   Calendar,
-  ArrowRight,
-  Star,
-  Trophy
-} from 'lucide-react';
-import { useI18n } from '../contexts/I18nContext';
-import { useAuth } from '../contexts/AuthContext';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { motion } from 'framer-motion';
-import StatsCard from '../components/StatsCard';
-import ActivityTimeline from '../components/ActivityTimeline';
-import BadgeModal from '../components/BadgeModal';
+  Award,
+  Users,
+  FileImage,
+  CalendarDays
+} from "lucide-react";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
-const Dashboard: React.FC = () => {
-  const { t } = useI18n();
+const DashboardOverview = () => {
   const { user } = useAuth();
-  const [selectedBadge, setSelectedBadge] = React.useState(null);
-  const [showBadgeModal, setShowBadgeModal] = React.useState(false);
-
-  const { data: dashboardData, isLoading } = useQuery({
-    queryKey: ['dashboard'],
-    queryFn: async () => {
-      const response = await axios.get('/api/dashboard/stats');
-      return response.data;
-    }
-  });
-
-  const { data: recentBadges } = useQuery({
-    queryKey: ['recent-badges'],
-    queryFn: async () => {
-      const response = await axios.get('/api/badges/recent');
-      return response.data;
-    }
-  });
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  const stats = [
-    {
-      title: t('totalCertificates'),
-      value: dashboardData?.userStats?.totalCertificates || 0,
-      icon: FileText,
-      color: 'bg-blue-500',
-      change: '+12%',
-      trend: 'up' as const
-    },
-    {
-      title: t('pendingCertificates'),
-      value: dashboardData?.userStats?.pendingCertificates || 0,
-      icon: Clock,
-      color: 'bg-yellow-500',
-      change: '+5%',
-      trend: 'up' as const
-    },
-    {
-      title: t('approvedCertificates'),
-      value: dashboardData?.userStats?.approvedCertificates || 0,
-      icon: CheckCircle,
-      color: 'bg-green-500',
-      change: '+8%',
-      trend: 'up' as const
-    },
-    {
-      title: 'Total Users',
-      value: dashboardData?.totalUsers || 0,
-      icon: Users,
-      color: 'bg-purple-500',
-      change: '+15%',
-      trend: 'up' as const
-    }
+  const { toast } = useToast();
+  
+  const userName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'User';
+  
+  const handleViewCertificate = (certId: string, certType: string) => {
+    toast({
+      title: "Opening Certificate",
+      description: `Viewing ${certType} details...`,
+    });
+    // Navigate to certificate detail view
+    console.log('View certificate:', certId);
+  };
+  
+  const handleDownloadCertificate = (certId: string, certType: string) => {
+    toast({
+      title: "Download Started",
+      description: `Downloading ${certType}...`,
+    });
+    // Simulate download
+    console.log('Download certificate:', certId);
+  };
+  const recentCertificates = [
+    { id: "1", type: "Birth Certificate", name: "John Doe Jr.", date: "2024-01-15", status: "Verified" },
+    { id: "2", type: "Marriage Certificate", name: "John & Jane Doe", date: "2024-01-10", status: "Processing" },
+    { id: "3", type: "Death Certificate", name: "Robert Doe Sr.", date: "2024-01-05", status: "Verified" },
   ];
 
-  const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+  const quickActions = [
+    { icon: Plus, label: "Register Birth", href: "/dashboard/register/birth", color: "text-blue-600" },
+    { icon: FileText, label: "Register Marriage", href: "/dashboard/register/marriage", color: "text-green-600" },
+    { icon: Shield, label: "Register Death", href: "/dashboard/register/death", color: "text-purple-600" },
+    { icon: FileImage, label: "Manage Documents", href: "/documents", color: "text-cyan-600" },
+    { icon: CalendarDays, label: "Schedule Appointment", href: "/appointments", color: "text-violet-600" },
+    { icon: Users, label: "View Family Tree", href: "/dashboard/family", color: "text-orange-600" },
+  ];
 
   return (
-    <div className="space-y-6">
-      {/* Welcome Section */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 rounded-xl p-8 text-white relative overflow-hidden"
-      >
-        <div className="absolute inset-0 bg-black/10"></div>
-        <div className="relative z-10">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">
-              {t('welcome')}, {user?.firstName}! 👋
-            </h1>
-            <p className="text-blue-100 mt-2">
-              Here's what's happening with your certificates today.
-            </p>
-            <div className="flex items-center space-x-4 mt-4">
-              <Link
-                to="/certificates/new"
-                className="inline-flex items-center px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                New Application
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Link>
-              {recentBadges?.length > 0 && (
-                <button
-                  onClick={() => {
-                    setSelectedBadge(recentBadges[0]);
-                    setShowBadgeModal(true);
-                  }}
-                  className="inline-flex items-center px-4 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 rounded-lg transition-colors"
-                >
-                  <Trophy className="h-4 w-4 mr-2" />
-                  New Badge!
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="hidden md:block">
-            <div className="text-right">
-              <p className="text-blue-100 text-sm">Today</p>
-              <p className="text-2xl font-bold">{new Date().toLocaleDateString()}</p>
-            </div>
-          </div>
-        </div>
-        </div>
-      </motion.div>
+    <div className="container mx-auto px-4 py-8 space-y-8">
+      {/* Header */}
+      <div className="animate-fade-in">
+        <h1 className="font-display text-3xl font-bold text-foreground mb-2">
+          Welcome back, {userName}
+        </h1>
+        <p className="text-muted-foreground">
+          Manage your vital records and civic engagement from your secure dashboard.
+        </p>
+      </div>
 
-      {/* Stats Grid */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
-          <StatsCard
-            key={stat.name}
-            {...stat}
-            delay={index * 0.1}
-          />
-        ))}
+        <Card className="animate-scale-in">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Certificates</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">12</div>
+            <p className="text-xs text-muted-foreground">
+              +2 from last month
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card className="animate-scale-in" style={{ animationDelay: "0.1s" }}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Verified Events</CardTitle>
+            <Shield className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">8</div>
+            <p className="text-xs text-muted-foreground">
+              100% verification rate
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="animate-scale-in" style={{ animationDelay: "0.2s" }}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Civic Points</CardTitle>
+            <Award className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">2,450</div>
+            <p className="text-xs text-muted-foreground">
+              +150 this week
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="animate-scale-in" style={{ animationDelay: "0.3s" }}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending Actions</CardTitle>
+            <Bell className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">3</div>
+            <p className="text-xs text-muted-foreground">
+              Requires attention
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Monthly Trends */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {t('monthlyTrends')}
-            </h3>
-            <TrendingUp className="h-5 w-5 text-gray-400" />
-          </div>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={dashboardData?.monthlyTrends || []}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Line 
-                  type="monotone" 
-                  dataKey="count" 
-                  stroke="#3B82F6" 
-                  strokeWidth={2}
-                  dot={{ fill: '#3B82F6' }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </motion.div>
+      <div className="grid lg:grid-cols-3 gap-8">
+        {/* Quick Actions */}
+        <div className="lg:col-span-1">
+          <Card className="animate-fade-in-up">
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+              <CardDescription>
+                Register new events or manage existing records
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {quickActions.map((action, index) => (
+                <Link key={action.label} to={action.href} className="block">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start h-auto py-4 hover:bg-accent/50"
+                  >
+                    <action.icon className={`h-5 w-5 mr-3 ${action.color}`} />
+                    <span>{action.label}</span>
+                  </Button>
+                </Link>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
 
-        {/* Certificate Types Distribution */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {t('certificateTypes')}
-            </h3>
-            <Calendar className="h-5 w-5 text-gray-400" />
-          </div>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={dashboardData?.certificateTypes || []}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="count"
-                >
-                  {(dashboardData?.certificateTypes || []).map((entry: any, index: number) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Bottom Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Badges/Achievements */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {t('achievements')}
-            </h3>
-            <div className="flex items-center space-x-2">
-              <Award className="h-5 w-5 text-yellow-500" />
-              <Link
-                to="/profile"
-                className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400"
-              >
-                View All
-              </Link>
-            </div>
-          </div>
-          <div className="space-y-3">
-            {dashboardData?.badges?.map((badge: any) => (
-              <div
-                key={badge.id}
-                className="flex items-center space-x-3 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/10 dark:to-orange-900/10 rounded-lg border border-yellow-200 dark:border-yellow-800 cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => {
-                  setSelectedBadge(badge);
-                  setShowBadgeModal(true);
-                }}
-              >
-                <div className="text-2xl">{badge.icon}</div>
-                <div className="flex-1">
-                  <h4 className="font-medium text-gray-900 dark:text-white">
-                    {badge.name}
-                  </h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {badge.description}
-                  </p>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {new Date(badge.earnedAt).toLocaleDateString()}
-                  </span>
-                </div>
+        {/* Recent Certificates */}
+        <div className="lg:col-span-2">
+          <Card className="animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
+            <CardHeader>
+              <CardTitle>Recent Certificates</CardTitle>
+              <CardDescription>
+                Your latest registered vital events and their status
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {recentCertificates.map((cert, index) => (
+                  <div 
+                    key={cert.id} 
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/30 transition-colors"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <FileText className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground">{cert.type}</p>
+                        <p className="text-sm text-muted-foreground">{cert.name}</p>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <Calendar className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">{cert.date}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant={cert.status === "Verified" ? "default" : "secondary"}>
+                        {cert.status}
+                      </Badge>
+                      <div className="flex space-x-1">
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="h-8 w-8"
+                          onClick={() => handleViewCertificate(cert.id, cert.type)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="h-8 w-8"
+                          onClick={() => handleDownloadCertificate(cert.id, cert.type)}
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-            {(!dashboardData?.badges || dashboardData.badges.length === 0) && (
-              <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-                No badges earned yet. Complete more actions to earn badges!
-              </p>
-            )}
-          </div>
-        </motion.div>
-
-        {/* Recent Activities */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {t('recentActivities')}
-            </h3>
-            <div className="flex items-center space-x-2">
-              <Activity className="h-5 w-5 text-green-500" />
-              <Link
-                to="/audit"
-                className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400"
-              >
-                View All
-              </Link>
-            </div>
-          </div>
-          <ActivityTimeline 
-            activities={dashboardData?.recentActivities?.slice(0, 5) || []}
-          />
-        </motion.div>
+              
+              <div className="mt-6 pt-4 border-t">
+                <Link to="/dashboard/certificates">
+                  <Button variant="outline" className="w-full">
+                    View All Certificates
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
+    </div>
+  );
+};
 
-      {/* Badge Modal */}
-      <BadgeModal
-        badge={selectedBadge}
-        isOpen={showBadgeModal}
-        onClose={() => {
-          setShowBadgeModal(false);
-          setSelectedBadge(null);
-        }}
-      />
+const Dashboard = () => {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-accent/10 to-muted/30">
+      <Routes>
+        <Route path="/" element={<DashboardOverview />} />
+        {/* Add more dashboard routes here as needed */}
+      </Routes>
     </div>
   );
 };

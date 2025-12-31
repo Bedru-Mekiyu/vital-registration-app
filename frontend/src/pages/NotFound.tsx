@@ -1,53 +1,64 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Home, ArrowLeft } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useLocation, Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Home, Search, AlertCircle } from "lucide-react";
 
-const NotFound: React.FC = () => {
+const NotFound = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    console.error("404 Error: User attempted to access non-existent route:", location.pathname);
+  }, [location.pathname]);
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center"
-      >
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-accent/20 to-muted/30 px-4">
+      <div className="text-center max-w-md animate-fade-in">
+        {/* 404 Icon */}
         <div className="mb-8">
-          <h1 className="text-9xl font-bold text-gray-200 dark:text-gray-700">404</h1>
-          <div className="relative -mt-4">
-            <h2 className="text-4xl font-bold text-gray-900 dark:text-white">Page Not Found</h2>
+          <div className="inline-flex p-6 bg-destructive/10 rounded-full mb-4">
+            <AlertCircle className="h-16 w-16 text-destructive" />
           </div>
         </div>
-        
-        <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
-          The page you're looking for doesn't exist or has been moved.
-        </p>
-        
-        <div className="flex items-center justify-center space-x-4">
-          <Link
-            to="/"
-            className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Home className="h-5 w-5 mr-2" />
-            Go Home
+
+        {/* Content */}
+        <div className="space-y-4 mb-8">
+          <h1 className="font-display text-6xl font-bold text-foreground">404</h1>
+          <h2 className="text-2xl font-semibold text-foreground">Page Not Found</h2>
+          <p className="text-muted-foreground leading-relaxed">
+            The page you're looking for doesn't exist or may have been moved. 
+            Let's get you back to safety.
+          </p>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Link to="/">
+            <Button variant="hero" size="lg" className="group">
+              <Home className="h-4 w-4 mr-2" />
+              Back to Home
+            </Button>
           </Link>
-          
-          <button
-            onClick={() => window.history.back()}
-            className="inline-flex items-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            Go Back
-          </button>
+          <Link to="/verify">
+            <Button variant="civic" size="lg">
+              <Search className="h-4 w-4 mr-2" />
+              Verify Certificate
+            </Button>
+          </Link>
         </div>
-        
-        <div className="mt-12">
-          <img
-            src="https://images.pexels.com/photos/261909/pexels-photo-261909.jpeg?auto=compress&cs=tinysrgb&w=400"
-            alt="Not Found"
-            className="mx-auto w-64 h-64 object-cover rounded-lg opacity-50"
-          />
+
+        {/* Help Text */}
+        <div className="mt-8 pt-6 border-t border-border/50">
+          <p className="text-sm text-muted-foreground">
+            Need help? Contact our support team at{" "}
+            <a 
+              href="mailto:support@civicconnect.gov.et" 
+              className="text-primary hover:underline font-medium"
+            >
+              support@civicconnect.gov.et
+            </a>
+          </p>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 };
